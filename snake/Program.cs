@@ -8,7 +8,7 @@ namespace Snake
     {
         private static void Main(string[] args)
         {
-            GameManager.Initialize();
+            GameInitializer.Initialize();
         }
     }
 }

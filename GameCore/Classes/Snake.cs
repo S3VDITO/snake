@@ -7,7 +7,7 @@ using System.Linq;
 namespace GameCore
 {
     [Flags]
-    public enum SnakeDirection
+    internal enum SnakeDirection
     {
         Up,
         Down,
@@ -15,21 +15,19 @@ namespace GameCore
         Right
     }
 
-    public class Snake
+    internal class Snake
     {
+        private SnakeDirection SnakeDirection { get; set; } = SnakeDirection.Up;
         private bool IsAlive { get; set; } = true;
-        private Vector2D SpawnOrigin { get; set; }
-
-        public List<Point> SnakeBody { get; set; } = new List<Point>();
         private Point Tail { get; set; }
 
-        private SnakeDirection SnakeDirection { get; set; } = SnakeDirection.Up;
+        public float Speed = 0.05f;
 
-        public Snake(Vector2D spawnOrigin)
+        public List<Point> SnakeBody { get; set; } = new List<Point>();
+
+        public Snake(Vector2D spawnOrigin, int snakeSize = 3)
         {
-            SpawnOrigin = spawnOrigin;
-
-            for (int i = 0; i < 3; i++)
+            for (int i = 0; i < snakeSize; i++)
             {
                 Point point = new Point(spawnOrigin + new Vector2D(0, i), '*');
                 point.Draw();
@@ -41,155 +39,107 @@ namespace GameCore
             GameThread.Thread(SnakeControl());
         }
 
-        private IEnumerator ResetSnake()
+        public IEnumerator SnakeControl()
         {
-            IsAlive = false;
-            SnakeBody.Clear();
-
-            for (int i = 0; i < 3; i++)
+            void ChangeDirection(ConsoleKey key)
             {
-                Point point = new Point(SpawnOrigin + new Vector2D(0, i), '*');
-                point.Draw();
+                switch (key)
+                {
+                    case ConsoleKey.UpArrow:
+                        if (SnakeDirection == SnakeDirection.Up || SnakeDirection == SnakeDirection.Down)
+                            break;
 
-                SnakeBody.Add(point);
+                        SnakeDirection = SnakeDirection.Up;
+                        break;
+                    case ConsoleKey.DownArrow:
+                        if (SnakeDirection == SnakeDirection.Up || SnakeDirection == SnakeDirection.Down)
+                            break;
+
+                        SnakeDirection = SnakeDirection.Down;
+                        break;
+                    case ConsoleKey.LeftArrow:
+                        if (SnakeDirection == SnakeDirection.Left || SnakeDirection == SnakeDirection.Right)
+                            break;
+
+                        SnakeDirection = SnakeDirection.Left;
+                        break;
+                    case ConsoleKey.RightArrow:
+                        if (SnakeDirection == SnakeDirection.Left || SnakeDirection == SnakeDirection.Right)
+                            break;
+
+                        SnakeDirection = SnakeDirection.Right;
+                        break;
+                }
             }
 
-            GameManager.CreateBarriers();
+            while (IsAlive)
+            {
+                yield return GameThread.KeyPressWaiter(ChangeDirection, ConsoleKey.UpArrow, ConsoleKey.DownArrow, ConsoleKey.LeftArrow, ConsoleKey.RightArrow);
+            }
 
-            yield return GameThread.Wait(.5f);
-            foreach (var body in SnakeBody)
-                body.Clear();
-            yield return GameThread.Wait(.5f);
-            foreach (var body in SnakeBody)
-                body.Draw();
-            yield return GameThread.Wait(.5f);
-            foreach (var body in SnakeBody)
-                body.Clear();
-            yield return GameThread.Wait(.5f);
-            foreach (var body in SnakeBody)
-                body.Draw();
-
-            IsAlive = true;
-
-            GameThread.Thread(SnakeMovement());
-            GameThread.Thread(SnakeControl());
+            yield break;
         }
 
         public IEnumerator SnakeMovement()
         {
-            while (IsAlive && !IsHit())
+            while (IsAlive)
             {
-                yield return GameThread.Wait(0.05f);
+                yield return GameThread.Wait(Speed);
+
                 Tail = SnakeBody[SnakeBody.Count - 1];
                 SnakeBody.Remove(Tail);
+
                 switch (SnakeDirection)
                 {
                     case SnakeDirection.Up:
                         if (SnakeBody[0].Origin.Y == 0)
-                            Tail.Origin = new Vector2D(SnakeBody[0].Origin.X, GameManager.Height - 0);
+                            Tail.Origin = new Vector2D(SnakeBody[0].Origin.X, GameInitializer.Height - 0);
                         else
                             Tail.Origin = SnakeBody[0].Origin - new Vector2D(0, 1);
                         break;
                     case SnakeDirection.Down:
-                        if (SnakeBody[0].Origin.Y == GameManager.Height)
+                        if (SnakeBody[0].Origin.Y == GameInitializer.Height)
                             Tail.Origin = new Vector2D(SnakeBody[0].Origin.X, 0);
                         else
                             Tail.Origin = SnakeBody[0].Origin + new Vector2D(0, 1);
                         break;
                     case SnakeDirection.Left:
                         if (SnakeBody[0].Origin.X == 0)
-                            Tail.Origin = new Vector2D(GameManager.Width, SnakeBody[0].Origin.Y);
+                            Tail.Origin = new Vector2D(GameInitializer.Width, SnakeBody[0].Origin.Y);
                         else
                             Tail.Origin = SnakeBody[0].Origin - new Vector2D(1, 0);
                         break;
                     case SnakeDirection.Right:
-                        if (SnakeBody[0].Origin.X == GameManager.Width)
+                        if (SnakeBody[0].Origin.X == GameInitializer.Width)
                             Tail.Origin = new Vector2D(0, SnakeBody[0].Origin.Y);
                         else
                             Tail.Origin = SnakeBody[0].Origin + new Vector2D(1, 0);
                         break;
                 }
-                SnakeBody.Insert(0, Tail);
+
+                if (IsHit())
+                    break;
 
                 if (IsEat())
-                    SnakeBody.Add(new Point(SnakeBody[1].Origin, '*'));
+                {
+                    SnakeBody.Add(new Point(SnakeBody[SnakeBody.Count - 1].Origin, '*'));
+                    GameInitializer.Map[ObjectType.Eat][0].Origin = GameFunctions.RandomXY();
+                }
+
+                SnakeBody.Insert(0, Tail);
             }
+
             yield break;
         }
 
         public bool IsHit()
         {
-            void ClearOldSnake()
-            {
-                foreach (var snakePart in SnakeBody)
-                    snakePart.Clear();
-            }
+            bool IsHitSelf = SnakeBody.Where(snakePoint => snakePoint.Origin.Equals(Tail.Origin)).Count() != 0;
+            bool IsHitBarrier = GameInitializer.Map[ObjectType.Barrier].Where(barrierPoint => barrierPoint.Origin.Equals(Tail.Origin)).Count() != 0;
 
-            foreach (var barrier in GameData.Barriers)
-            {
-                foreach (var snakePart in SnakeBody)
-                {
-                    if (barrier.Point.Origin.Equals(snakePart.Origin))
-                    {
-                        ClearOldSnake();
-                        GameThread.Thread(ResetSnake());
-                        return true;
-                    }
-                }
-            }
-
-            return false;
+            return IsHitSelf || IsHitBarrier;
         }
 
-        public bool IsEat()
-        {
-            foreach (var snakePart in SnakeBody)
-            {
-                if (snakePart.Origin.Equals(Eat.EatPoint.Origin))
-                {
-                    Eat.MoveEat();
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        public IEnumerator SnakeControl()
-        {
-            while (IsAlive)
-            {
-                yield return GameThread.KeyPressWaiter(new Action<ConsoleKey>(key =>
-                {
-                    switch (key)
-                    {
-                        case ConsoleKey.UpArrow:
-                            if (SnakeDirection == SnakeDirection.Up || SnakeDirection == SnakeDirection.Down)
-                                break;
-
-                            SnakeDirection = SnakeDirection.Up;
-                            break;
-                        case ConsoleKey.DownArrow:
-                            if (SnakeDirection == SnakeDirection.Up || SnakeDirection == SnakeDirection.Down)
-                                break;
-
-                            SnakeDirection = SnakeDirection.Down;
-                            break;
-                        case ConsoleKey.LeftArrow:
-                            if (SnakeDirection == SnakeDirection.Left || SnakeDirection == SnakeDirection.Right)
-                                break;
-
-                            SnakeDirection = SnakeDirection.Left;
-                            break;
-                        case ConsoleKey.RightArrow:
-                            if (SnakeDirection == SnakeDirection.Left || SnakeDirection == SnakeDirection.Right)
-                                break;
-
-                            SnakeDirection = SnakeDirection.Right;
-                            break;
-                    }
-                }), ConsoleKey.UpArrow, ConsoleKey.DownArrow, ConsoleKey.LeftArrow, ConsoleKey.RightArrow);
-            }
-            yield break;
-        }
+        public bool IsEat() => Tail.Origin.Equals(GameInitializer.Map[ObjectType.Eat][0].Origin);
     }
 }

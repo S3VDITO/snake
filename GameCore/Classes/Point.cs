@@ -4,9 +4,17 @@ using System.Text;
 
 namespace GameCore
 {
-    public class Point
+    internal enum ObjectType
+    {
+        Eat,
+        Barrier
+    }
+
+    internal class Point
     {
         private Vector2D _origin = Vector2D.Zero;
+        private char _pointSymbol = '#';
+
         public Vector2D Origin
         {
             get => _origin;
@@ -18,7 +26,16 @@ namespace GameCore
                 Draw();
             }
         }
-        public char PointSymbol { get; set; } = '#';
+
+        public char PointSymbol 
+        {
+            get => _pointSymbol;
+            set
+            {
+                _pointSymbol = value;
+                Draw();
+            }
+        }
 
         public Point(Vector2D origin, char pointSymbol)
         {

@@ -6,7 +6,7 @@ using System.Text;
 
 namespace GameCore
 {
-    public static class GameThread
+    internal static class GameThread
     {
         public static void OnInterval(int interval, Func<bool> function)
         {
