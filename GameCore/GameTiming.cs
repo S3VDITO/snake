@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Text;
 
 namespace GameCore
 {
@@ -14,10 +13,10 @@ namespace GameCore
             Stopwatch.Start();
         }
 
-        internal static List<ScriptTimer> Timers = new List<ScriptTimer>();
-        internal static long _currentTime;
+        public static List<ScriptTimer> Timers = new List<ScriptTimer>();
+        public static long _currentTime;
 
-        internal static void ProcessTimers()
+        public static void ProcessTimers()
         {
             _currentTime = Stopwatch.ElapsedMilliseconds;
 
@@ -44,15 +43,16 @@ namespace GameCore
                         else
                             Timers.Remove(timer);
                     }
-                    catch (Exception ex)
+                    catch(Exception ex)
                     {
+                        Console.WriteLine(ex.Message);
                         Timers.Remove(timer);
                     }
                 }
             }
         }
 
-        internal class ScriptTimer
+        public class ScriptTimer
         {
             public Delegate func;
             public long triggerTime;

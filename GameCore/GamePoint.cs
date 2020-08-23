@@ -4,16 +4,16 @@ using System.Text;
 
 namespace GameCore
 {
-    internal enum ObjectType
-    {
-        Eat,
-        Barrier
-    }
-
-    internal class Point
+    internal class GamePoint : IDisposable
     {
         private Vector2D _origin = Vector2D.Zero;
         private char _pointSymbol = '#';
+
+        public GamePoint(Vector2D origin, char pointSymbol)
+        {
+            _origin = origin;
+            PointSymbol = pointSymbol;
+        }
 
         public Vector2D Origin
         {
@@ -27,7 +27,7 @@ namespace GameCore
             }
         }
 
-        public char PointSymbol 
+        public char PointSymbol
         {
             get => _pointSymbol;
             set
@@ -37,15 +37,17 @@ namespace GameCore
             }
         }
 
-        public Point(Vector2D origin, char pointSymbol)
-        {
-            _origin = origin;
-            PointSymbol = pointSymbol;
-        }
-
         public void Draw() => DrawPoint(PointSymbol);
 
         public void Clear() => DrawPoint(' ');
+
+        public void Delete() => Dispose();
+
+        public void Dispose()
+        {
+            Clear();
+            GC.SuppressFinalize(this);
+        }
 
         private void DrawPoint(char symbol)
         {
