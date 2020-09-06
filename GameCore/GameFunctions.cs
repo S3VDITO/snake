@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Diagnostics;
+using System.Linq;
 
 namespace GameCore
 {
@@ -80,19 +81,10 @@ namespace GameCore
 
             ConsoleKey keyPressed = Console.ReadKey().Key;
 
-            while (true)
-            {
-                foreach (var key in keys)
-                {
-                    if (key == keyPressed)
-                    {
-                        action?.Invoke(keyPressed);
-                        yield break;
-                    }
-                }
-
+            while (!keys.Contains(keyPressed))
                 yield return 0;
-            }
+
+            action?.Invoke(keyPressed);
         }
 
         /// <summary>

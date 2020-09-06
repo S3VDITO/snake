@@ -2,14 +2,13 @@
 
 namespace GameCore
 {
-
     [StructLayout(LayoutKind.Sequential)]
     internal struct Vector2D
     {
         public int X;
         public int Y;
 
-        public static Vector2D Zero = new Vector2D(0, 0);
+        public static readonly Vector2D Zero = new Vector2D(0, 0);
 
         public Vector2D(int x, int y)
         {
@@ -44,14 +43,9 @@ namespace GameCore
         public static bool operator ==(Vector2D left, Vector2D right) => left.Equals(right);
         public static bool operator !=(Vector2D left, Vector2D right) => !left.Equals(right);
 
-        public override bool Equals(object obj)
-        {
-            if ((obj == null) || !GetType().Equals(obj.GetType()))
-                return false;
+        public override bool Equals(object obj) => 
+            obj is Vector2D vector && (vector.X == X && vector.Y == Y);
 
-            Vector2D p = (Vector2D)obj;
-            return (X == p.X) && (Y == p.Y);
-        }
         public override string ToString() => $"({X}, {Y})";
         public override int GetHashCode() => X ^ Y;
     }

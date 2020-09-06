@@ -44,10 +44,7 @@ namespace GameCore
 
             for (int menu_stroke = 0; menu_stroke < MenuDrawMap[MenuType].Count; menu_stroke++)
             {
-                if (menu_stroke == Cursor - 1)
-                    Console.ForegroundColor = ConsoleColor.Red;
-                else
-                    Console.ForegroundColor = ConsoleColor.Cyan;
+                Console.ForegroundColor = menu_stroke == Cursor - 1 ? ConsoleColor.Red : ConsoleColor.Cyan;
 
 
                 for (int j = xOffset; j < 19 + xOffset; j++)
@@ -87,10 +84,7 @@ namespace GameCore
         {
             for (int menu_stroke = 0; menu_stroke < MenuDrawMap[MenuType].Count; menu_stroke++)
             {
-                if (menu_stroke == Cursor - 1)
-                    Console.ForegroundColor = ConsoleColor.Red;
-                else
-                    Console.ForegroundColor = ConsoleColor.Cyan;
+                Console.ForegroundColor = menu_stroke == Cursor - 1 ? ConsoleColor.Red : ConsoleColor.Cyan;
 
                 MenuDrawMap[MenuType][MenuDrawMap[MenuType].Keys.ElementAt(menu_stroke)].ForEach(point => point.Draw());
             }

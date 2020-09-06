@@ -4,10 +4,10 @@ using System.Text;
 
 namespace GameCore
 {
-    internal class GamePoint : IDisposable
+    internal class GamePoint
     {
-        private Vector2D _origin = Vector2D.Zero;
-        private char _pointSymbol = '#';
+        private Vector2D _origin { get; set; } = Vector2D.Zero;
+        private char _pointSymbol { get; set; } = '#';
 
         public GamePoint(Vector2D origin, char pointSymbol)
         {
@@ -40,14 +40,6 @@ namespace GameCore
         public void Draw() => DrawPoint(PointSymbol);
 
         public void Clear() => DrawPoint(' ');
-
-        public void Delete() => Dispose();
-
-        public void Dispose()
-        {
-            Clear();
-            GC.SuppressFinalize(this);
-        }
 
         private void DrawPoint(char symbol)
         {
